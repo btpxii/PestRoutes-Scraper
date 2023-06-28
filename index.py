@@ -1,14 +1,24 @@
 import requests
 import time
 import logging
-from config import *
+from datetime import datetime
+from alert import discordWebhook
+from config import SUBDOMAIN, DEVICE_TOKEN, MOBILE_AUTH
+
+"""
+TODO / Brainstorming
+Error handling
+EOD recap
+Milestone tracking / incentive tracking
+Deliver message via lights? text message? in-app feed message? something else?
+"""
 
 logging.basicConfig(
     level=logging.INFO,
     format='[%(asctime)s]: %(message)s',
 )
 
-def getStats():
+def getStats(reps: list):
     stats = {}
     url = f"https://{SUBDOMAIN}.pestroutes.com/resources/mobile/salesroutes/leaderBoards.php"
     params = {
@@ -19,26 +29,37 @@ def getStats():
         "teamID": "2",
         "dateHelper": "6" # today: 0, yesterday: 1, this week: 2, last week: 3, this month: 4, last month: 5, this year: 6
     }
-    res = requests.get(url, params=params)
-    res = res.json()
-    for rep in res["leaders"]:
-        stats[rep['name']] = {'sales': rep['raw'], 'rev': float(rep['helper']['soldRevenue'])}
+    try:
+        r = requests.get(url, params=params)
+        if r.status_code == 200:
+            data = r.json()
+            stats = {rep['name']: {'sales': rep['raw'], 'rev': float(rep['helper'].get('soldRevenue', 0))}
+                     for rep in data['leaders']
+                     if rep['name'] in reps}
+                    
+    except requests.exceptions.RequestException as e:
+        logging.error(f"Error updating stats: {e}")
+
     return stats
 
-def main():
+def main(reps: list, delay: int):
     # get initial stats for comparison
-    stats = getStats()
-    time.sleep(5)
+    stats = getStats(reps=reps)
+    discordWebhook(message="TEST", timestamp=datetime.utcnow(), logger=logging)
+    time.sleep(delay)
 
     while True:
-        newStats = getStats()
+        newStats = getStats(reps=reps)
         if newStats != stats:
             for rep in newStats:
                 if newStats[rep]['sales'] > stats[rep]['sales']:
-                    logging.info(f"{rep} just got a sale, CV of ${newStats[rep]['rev'] - stats[rep]['rev']}")
+                    message = f"{rep} just got a sale, CV of ${newStats[rep]['rev'] - stats[rep]['rev']}"
                 elif newStats[rep]['sales'] < stats[rep]['sales']:
-                    logging.info(f"{rep} just had a cancel")
+                    message = f"{rep} just had a cancel"
+                logging.info(message)
+                discordWebhook(message=message, timestamp=datetime.utcnow(), logger=logging)
             stats = newStats
-        time.sleep(5)
 
-main()
+        time.sleep(delay)
+
+main(reps=["Anna Jorgensen", "Sam Jorgensen", "Ellie  Jorgensen", "Charlotte Jorgensen", "Nick Hortin", "Adam  Forsloff ", "Os Hansen"], delay=10)
