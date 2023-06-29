@@ -1,9 +1,8 @@
 import requests
 import time
 import logging
-from datetime import datetime
-from alert import discordWebhook
-from config import SUBDOMAIN, DEVICE_TOKEN, MOBILE_AUTH
+from alert import alert
+from config import SUBDOMAIN, DEVICE_TOKEN, MOBILE_AUTH, REPS
 
 """
 TODO / Brainstorming
@@ -13,10 +12,16 @@ Milestone tracking / incentive tracking
 Deliver message via lights? text message? in-app feed message? something else?
 """
 
-logging.basicConfig(
-    level=logging.INFO,
-    format='[%(asctime)s]: %(message)s',
-)
+logger = logging.getLogger(__name__)
+logger.setLevel(logging.INFO)
+formatter = logging.Formatter('[%(asctime)s]: %(message)s')
+# Create a stream handler for console output
+console_handler = logging.StreamHandler()
+console_handler.setLevel(logging.INFO)
+console_handler.setFormatter(formatter)
+# Add the console handler to the logger
+logger.addHandler(console_handler)
+
 
 def getStats(reps: list):
     stats = {}
@@ -38,28 +43,25 @@ def getStats(reps: list):
                      if rep['name'] in reps}
                     
     except requests.exceptions.RequestException as e:
-        logging.error(f"Error updating stats: {e}")
+        logger.error(msg=f"Error updating stats: {e}")
 
     return stats
 
 def main(reps: list, delay: int):
-    # get initial stats for comparison
-    stats = getStats(reps=reps)
-    discordWebhook(message="TEST", timestamp=datetime.utcnow(), logger=logging)
-    time.sleep(delay)
-
+    stats = getStats(reps=reps) # get initial stats for comparison
     while True:
+        logger.info(msg="Checking for updates...")
         newStats = getStats(reps=reps)
         if newStats != stats:
             for rep in newStats:
                 if newStats[rep]['sales'] > stats[rep]['sales']:
-                    message = f"{rep} just got a sale, CV of ${newStats[rep]['rev'] - stats[rep]['rev']}"
+                    alert(message=f"{rep} just got a sale, CV of ${newStats[rep]['rev'] - stats[rep]['rev']}",
+                          logger=logger)
                 elif newStats[rep]['sales'] < stats[rep]['sales']:
-                    message = f"{rep} just had a cancel"
-                logging.info(message)
-                discordWebhook(message=message, timestamp=datetime.utcnow(), logger=logging)
+                    alert(message=f"{rep} just had a cancel",
+                          logger=logger)
             stats = newStats
 
         time.sleep(delay)
 
-main(reps=["Anna Jorgensen", "Sam Jorgensen", "Ellie  Jorgensen", "Charlotte Jorgensen", "Nick Hortin", "Adam  Forsloff ", "Os Hansen"], delay=10)
+main(reps=REPS, delay=10)
