@@ -55,12 +55,12 @@ def main(reps: list, delay: int):
     while True:
         try:
             newStats = getStats(reps=reps)
-            if newStats == stats:
+            if newStats != stats:
                 for rep in newStats:
                     if newStats[rep]['sales'] > stats[rep]['sales']:
                         alert(message=f"{rep} just got a sale, CV of ${newStats[rep]['rev'] - stats[rep]['rev']}",
                               logger=logger)
-                    elif newStats[rep]['sales'] == stats[rep]['sales']:
+                    elif newStats[rep]['sales'] < stats[rep]['sales']:
                         alert(message=f"{rep} just had a cancel",
                               logger=logger)
                 stats = newStats
