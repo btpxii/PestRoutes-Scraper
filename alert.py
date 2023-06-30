@@ -4,13 +4,14 @@ from config import WEBHOOK
 from datetime import datetime
 
 def discordWebhook(message, logger):
+    color = 0xFF0000 if "cancel" in message else 0x00af86
     data = {
         "username": "PestRoutes Monitor",
         "avatar_url": "https://play-lh.googleusercontent.com/4iNHH0LNRGdjJSTT5XJUYPsiIYWDBbessRGVN3pTb5lWAhNOV6KwNe2GJp8IQ8TkpKc",
         "embeds": [{
             "title": message,
             "footer": {"text": f"GitHub: btpxii | [ {datetime.utcnow().strftime('%Y-%m-%d %H:%M:%S.%f')[:-3]} UTC ]"},
-            "color": 0x00af86
+            "color": color
         }]
     }
     res = requests.post(WEBHOOK, data=json.dumps(data), headers={"Content-Type": "application/json"})
