@@ -6,14 +6,14 @@ from config import SUBDOMAIN, DEVICE_TOKEN, MOBILE_AUTH, REPS
 
 """
 TODO / Brainstorming
-Error handling
+Write logs to file
 EOD recap
 Milestone tracking / incentive tracking
 Deliver message via lights? text message? in-app feed message? something else?
 """
 
 logger = logging.getLogger(__name__)
-logger.setLevel(logging.INFO)
+logger.setLevel(logging.DEBUG)
 formatter = logging.Formatter('[%(asctime)s]: %(message)s')
 
 # Create a stream handler for console output
@@ -21,8 +21,14 @@ console_handler = logging.StreamHandler()
 console_handler.setLevel(logging.INFO)
 console_handler.setFormatter(formatter)
 
-# Add the console handler to the logger
+# Create a file handler for writing logs to a file
+file_handler = logging.FileHandler('logs.txt')
+file_handler.setLevel(logging.DEBUG)
+file_handler.setFormatter(formatter)
+
+# Add the handlers to the logger
 logger.addHandler(console_handler)
+logger.addHandler(file_handler)
 
 def getStats(reps: list):
     stats = {}
