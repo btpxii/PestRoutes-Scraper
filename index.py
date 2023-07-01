@@ -46,10 +46,11 @@ def getStats(reps: list):
         r = requests.get(url, params=params)
         r.raise_for_status()  # Raise an exception for non-2xx status codes
         data = r.json()
+        if data['success'] is False: raise(ValueError("Mobile Authentication token has expired"))
         stats = {rep['name']: {'sales': rep['raw'], 'rev': float(rep['helper'].get('soldRevenue', 0))}
                  for rep in data['leaders']
                  if rep['name'] in reps}
-    except (requests.exceptions.RequestException, ValueError) as e:
+    except Exception as e:
         logger.error(msg=f"Error updating stats: {e}")
         return stats  # Return empty stats in case of an error
 
@@ -70,7 +71,7 @@ def main(reps: list, delay: int):
                         alert(message=f"{rep} just had a cancel",
                               logger=logger)
                 stats = newStats
-        except (requests.exceptions.RequestException, ValueError) as e:
+        except Exception as e:
             logger.error(msg=f"Error retrieving stats: {e}")
 
         time.sleep(delay)
