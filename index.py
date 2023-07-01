@@ -67,6 +67,8 @@ def main(reps: list, delay: int):
                     if newStats[rep]['sales'] > stats[rep]['sales']:
                         alert(message=f"{rep} just got a sale, CV of ${newStats[rep]['rev'] - stats[rep]['rev']}",
                               logger=logger)
+                        if (newStats[rep]['sales'] % 50) == 0:
+                            alert(message=f"{rep} just hit {newStats[rep]['sales']} sales!")
                     elif newStats[rep]['sales'] < stats[rep]['sales']:
                         alert(message=f"{rep} just had a cancel",
                               logger=logger)
