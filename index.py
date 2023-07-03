@@ -62,19 +62,24 @@ def main(reps: list, delay: int):
     while True:
         try:
             newStats = getStats(reps=reps)
-            if newStats != stats:
+        except Exception as e:
+            logger.error(msg=f"Error retrieving stats: {e}")
+            continue
+        if newStats != stats:
+            try:
                 for rep in newStats:
                     if newStats[rep]['sales'] > stats[rep]['sales']:
                         alert(message=f"{rep} just got a sale, CV of ${newStats[rep]['rev'] - stats[rep]['rev']}",
-                              logger=logger)
+                                logger=logger)
                         if (newStats[rep]['sales'] % 50) == 0:
-                            alert(message=f"{rep} just hit {newStats[rep]['sales']} sales!")
+                            alert(message=f"{rep} just hit {newStats[rep]['sales']} sales!", logger=logger)
                     elif newStats[rep]['sales'] < stats[rep]['sales']:
                         alert(message=f"{rep} just had a cancel",
-                              logger=logger)
+                                logger=logger)
                 stats = newStats
-        except Exception as e:
-            logger.error(msg=f"Error retrieving stats: {e}")
+            except Exception as e:
+                logger.error(msg=f"Error checking stats: {e}")
+                stats = newStats
 
         time.sleep(delay)
 
