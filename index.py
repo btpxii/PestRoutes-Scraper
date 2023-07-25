@@ -83,4 +83,4 @@ def main(reps: list, delay: int):
 
         time.sleep(delay)
 
-main(reps=REPS, delay=30)
+main(reps=REPS, delay=10)
